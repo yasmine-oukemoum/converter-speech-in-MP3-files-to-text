@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Transcription Service</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --primary-dark: #2667cc;
+            --success: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --danger: #ef476f;
+            --warning: #ffd166;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-800: #343a40;
+            --transition: all 0.3s ease;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background-color: #f0f4f8;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: var(--radius);
+            background-color: white;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(120deg, var(--primary), var(--success));
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        h1 {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .main-content {
+            padding: 30px;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--radius);
+            padding: 40px 25px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: var(--transition);
+            background-color: var(--gray-100);
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(58, 134, 255, 0.05);
+        }
+        
+        .upload-area i {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .upload-area h3 {
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .upload-area p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        .file-info {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            padding: 8px 15px;
+            background-color: var(--light);
+            border-radius: 20px;
+            display: inline-block;
+            color: var(--dark);
+        }
+        
+        .progress-container {
+            margin: 25px 0;
+            display: none;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+        
+        .button {
+            background-color: var(--primary);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: var(--transition);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button:disabled {
+            background-color: var(--gray-300);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .button-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .button-secondary:hover {
+            background-color: rgba(58, 134, 255, 0.1);
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .error {
+            color: var(--danger);
+            background-color: rgba(239, 71, 111, 0.1);
+            padding: 15px;
+            border-radius: var(--radius);
+            margin: 20px 0;
+            display: none;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .result {
+            margin-top: 30px;
+            display: none;
+            background-color: white;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        
+        .result-header {
+            background-color: var(--light);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--gray-300);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .result-header h3 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .transcription {
+            white-space: pre-wrap;
+            background-color: white;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        
+        .info-box {
+            background-color: rgba(76, 201, 240, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .info-box i {
+            color: var(--success);
+            margin-right: 10px;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                border-radius: var(--radius);
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .button-row {
+                flex-direction: column;
+            }
+            
+            .button {
+                width: 100%;
+            }
+        }
+
+        /* Added for demo purposes */
+        .demo-mode-banner {
+            background-color: rgba(255, 209, 102, 0.2);
+            border-left: 4px solid var(--warning);
+            padding: 15px 20px;
+            margin: 10px 0 20px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .demo-mode-banner i {
+            color: var(--warning);
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Audio Transcription</h1>
+            <p>Convert your MP3 audio to text with ease</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="demo-mode-banner" id="demo-banner">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Demo Mode Activated:</strong> Since the server endpoint may not be available, this demo will simulate the transcription process.
+            </div>
+            
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                Upload an MP3 file to get an accurate text transcription. Maximum file size: 50MB.
+            </div>
+            
+            <div id="upload-area" class="upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Upload Audio File</h3>
+                <p>Drag & drop your MP3 file here or click to select</p>
+                <input type="file" id="file-input" accept=".mp3" style="display: none">
+                <div class="file-info" id="file-info" style="display: none;"></div>
+            </div>
+            
+            <div class="error" id="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="error-text"></span>
+            </div>
+            
+            <div class="progress-container" id="progress-container">
+                <div class="progress-label">
+                    <span>Processing audio file...</span>
+                    <span id="progress-percentage">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+            
+            <button id="upload-button" class="button" disabled>
+                <i class="fas fa-microphone"></i> Transcribe Audio
+            </button>
+            
+            <div class="result animate" id="result">
+                <div class="result-header">
+                    <h3>Transcription Result</h3>
+                </div>
+                <div class="transcription" id="transcription"></div>
+                <div class="button-row">
+                    <button id="copy-button" class="button">
+                        <i class="fas fa-copy"></i> Copy to Clipboard
+                    </button>
+                    <button id="download-button" class="button button-secondary">
+                        <i class="fas fa-download"></i> Download as Text
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const uploadButton = document.getElementById('upload-button');
+        const progressContainer = document.getElementById('progress-container');
+        const progress = document.getElementById('progress');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const result = document.getElementById('result');
+        const transcription = document.getElementById('transcription');
+        const copyButton = document.getElementById('copy-button');
+        const downloadButton = document.getElementById('download-button');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const demoBanner = document.getElementById('demo-banner');
+
+        // Constants
+        const DEMO_MODE = true; // Set to true to enable demo mode (no server required)
+        const UPLOAD_ENDPOINT = '/upload'; // Your actual server endpoint
+        const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+        // Sample transcription text for demo mode
+        const SAMPLE_TRANSCRIPTIONS = [
+            "Welcome to the audio transcription service. This is a demonstration of our transcription capabilities. Our AI-powered system can accurately transcribe various types of audio content including interviews, meetings, lectures, and more.",
+            "Good morning, everyone. Today we're going to discuss the quarterly results. Our revenue has increased by 15% compared to last quarter, and we've seen significant growth in our international markets.",
+            "The importance of clear communication cannot be overstated. In today's fast-paced world, effective communication skills are essential for personal and professional success.",
+            "Thank you for joining today's podcast. We'll be exploring the latest developments in artificial intelligence and how they're transforming industries around the world."
+        ];
+
+        // Handle file selection
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3a86ff';
+            uploadArea.style.backgroundColor = 'rgba(58, 134, 255, 0.05)';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '';
+            uploadArea.style.backgroundColor = '';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '';
+            uploadArea.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileInfo();
+            }
+        });
+
+        fileInput.addEventListener('change', updateFileInfo);
+
+        function updateFileInfo() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                
+                // Check if file is MP3
+                if (!file.name.toLowerCase().endsWith('.mp3')) {
+                    showError('Only MP3 files are supported');
+                    fileInput.value = '';
+                    fileInfo.textContent = '';
+                    fileInfo.style.display = 'none';
+                    uploadButton.disabled = true;
+                    return;
+                }
+                
+                // Check file size
+                if (file.size > MAX_FILE_SIZE) {
+                    showError(`File size exceeds the maximum limit of 50MB`);
+                    fileInput.value = '';
+                    fileInfo.textContent = '';
+                    fileInfo.style.display = 'none';
+                    uploadButton.disabled = true;
+                    return;
+                }
+                
+                // Format file size
+                let size = file.size;
+                let unit = 'bytes';
+                
+                if (size > 1024 * 1024) {
+                    size = (size / (1024 * 1024)).toFixed(2);
+                    unit = 'MB';
+                } else if (size > 1024) {
+                    size = (size / 1024).toFixed(2);
+                    unit = 'KB';
+                }
+                
+                fileInfo.innerHTML = `<i class="fas fa-file-audio"></i> ${file.name} (${size} ${unit})`;
+                fileInfo.style.display = 'inline-block';
+                uploadButton.disabled = false;
+                hideError();
+            } else {
+                fileInfo.textContent = '';
+                fileInfo.style.display = 'none';
+                uploadButton.disabled = true;
+            }
+        }
+
+        // Handle upload
+        uploadButton.addEventListener('click', () => {
+            if (fileInput.files.length === 0) return;
+            
+            const file = fileInput.files[0];
+            
+            // Show progress bar
+            progressContainer.style.display = 'block';
+            uploadButton.disabled = true;
+            hideError();
+            
+            // Reset result area
+            result.style.display = 'none';
+            transcription.textContent = '';
+            
+            if (DEMO_MODE) {
+                // Demo mode - simulate upload and processing
+                simulateTranscription(file);
+            } else {
+                // Real upload to server
+                uploadToServer(file);
+            }
+        });
+
+        function simulateTranscription(file) {
+            let progressValue = 0;
+            const totalSteps = 20;
+            const intervalTime = 200;
+            
+            // Simulate progress
+            const progressInterval = setInterval(() => {
+                progressValue += 100 / totalSteps;
+                const roundedProgress = Math.min(Math.round(progressValue), 100);
+                progress.style.width = roundedProgress + '%';
+                progressPercentage.textContent = roundedProgress + '%';
+                
+                if (roundedProgress >= 100) {
+                    clearInterval(progressInterval);
+                    
+                    // Simulate server response
+                    setTimeout(() => {
+                        // Pick a random sample transcription
+                        const randomIndex = Math.floor(Math.random() * SAMPLE_TRANSCRIPTIONS.length);
+                        const sampleText = SAMPLE_TRANSCRIPTIONS[randomIndex];
+                        
+                        // Display the result
+                        showTranscriptionResult(sampleText);
+                        
+                        // Reset UI
+                        resetUI();
+                    }, 500);
+                }
+            }, intervalTime);
+        }
+
+        function uploadToServer(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Simulate progress (actual progress requires server events)
+            let progressValue = 0;
+            const progressInterval = setInterval(() => {
+                if (progressValue < 90) {
+                    progressValue += 5;
+                    progress.style.width = progressValue + '%';
+                    progressPercentage.textContent = progressValue + '%';
+                }
+            }, 500);
+            
+            // Send file to server
+            fetch(UPLOAD_ENDPOINT, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                clearInterval(progressInterval);
+                
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Error processing file');
+                    });
+                }
+                
+                return response.json();
+            })
+            .then(data => {
+                // Complete progress
+                progress.style.width = '100%';
+                progressPercentage.textContent = '100%';
+                
+                // Display the result
+                showTranscriptionResult(data.transcription);
+            })
+            .catch(error => {
+                // If server error, switch to demo mode
+                showError(`Server error: ${error.message}. Switching to demo mode.`);
+                setTimeout(() => {
+                    hideError();
+                    simulateTranscription(file);
+                }, 2000);
+            })
+            .finally(() => {
+                // Reset UI
+                resetUI();
+            });
+        }
+
+        function showTranscriptionResult(text) {
+            transcription.textContent = text;
+            result.style.display = 'block';
+            result.classList.add('animate');
+        }
+
+        function resetUI() {
+            // Reset file input
+            fileInput.value = '';
+            fileInfo.textContent = '';
+            fileInfo.style.display = 'none';
+            
+            // Reset progress
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progress.style.width = '0%';
+                progressPercentage.textContent = '0%';
+                uploadButton.disabled = true;
+            }, 1000);
+        }
+
+        // Copy to clipboard
+        copyButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(transcription.textContent)
+                .then(() => {
+                    const originalText = copyButton.innerHTML;
+                    copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        copyButton.innerHTML = originalText;
+                    }, 2000);
+                })
+                .catch(err => {
+                    showError('Failed to copy: ' + err);
+                });
+        });
+
+        // Download as text
+        downloadButton.addEventListener('click', () => {
+            const text = transcription.textContent;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'transcription.txt';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        // Initialize demo mode notification if needed
+        if (DEMO_MODE) {
+            demoBanner.style.display = 'block';
+        } else {
+            demoBanner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>

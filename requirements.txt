@@ -1,0 +1,4 @@
+Flask==2.3.3
+SpeechRecognition==3.10.0
+pydub==0.25.1
+uuid==1.30
